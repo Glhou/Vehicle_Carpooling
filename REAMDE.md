@@ -42,6 +42,9 @@ problem = Problem(nb_nodes,
 ## Todo
 
 - [x] Shuffle
+- [x] Conditions
 - [ ] Score
 - [ ] Gradient
-- [ ] Conditions
+- [ ] Incorporate Sumo for time
+- [ ] time optimization
+- [ ] number of vehicle optimization
