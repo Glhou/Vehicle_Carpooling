@@ -4,6 +4,7 @@
 """
 
 import numpy as np
+import math
 
 
 class Solution:
@@ -62,19 +63,15 @@ class Solution:
             rate (float): rate of the shuffle (0 to 1)
             path_map (np.array): possible path on the map
         """
-        for _, passenger_map in enumerate(self.solution):
-            for node_k, node_l in zip(range(self.nb_nodes), range(self.nb_nodes)):
-                if path_map[node_k, node_l]:
-                    random_matrix = np.random.choice([-1, 1], self.nb_entity)
-                    passenger_map[node_k, node_l] += rate * random_matrix
-        np.clip(self.solution, 0, 1)  # clip value between 0 and 1
+        for step, _ in enumerate(self.solution):
+            self._shuffle_step(step, rate, path_map)
 
 
 class Ride(Solution):
     """Ride class
     """
 
-    def __init__(self, nb_steps, nb_nodes, nb_passengers) -> None:
+    def __init__(self, nb_steps: int, nb_nodes: int, nb_passengers: int, passenger_start_points: np.ndarray, passenger_finish_points: np.ndarray, path_map: np.ndarray, nb_vehicle: int, vehicle_capacity: int) -> None:
         """Initialize the Ride object
 
         Args:
@@ -182,12 +179,77 @@ class Drive(Solution):
     """Drive class
     """
 
-    def __init__(self, nb_steps, nb_nodes, nb_vehicles) -> None:
+    def __init__(self, nb_steps: int, nb_nodes: int, nb_vehicles: int, vehicle_capacity: int, vehicle_start_points: np.ndarray, path_map: np.ndarray) -> None:
         """Initialize the Drive object
 
         Args:
             nb_steps (int): number of maximum steps
             nb_nodes (int): number of nodes
             nb_vehicles (int): number of vehicles
+            vehicle_capacity (int): vehicle capacity
+            vehicle_start_points (np.ndarray): list of vehicle start points
+            path_map (np.ndarray): possible path on the map
         """
         super().__init__(nb_steps, nb_nodes, nb_vehicles)
+        self.vehicle_capacity = vehicle_capacity
+        self.vehicle_start_points = vehicle_start_points
+        self.path_map = path_map
+
+    def _check_vehicle_start_constraint(self):
+        '''Constraint: Each vehicle must start at designated places
+        '''
+        check = True
+        for vehicle in range(self.nb_entity):
+            check *= sum(self.solution[0,
+                         self.vehicle_start_points[vehicle], :, vehicle]) == 1
+        return check
+
+    def _check_vehicles_path_constraint(self):
+        '''Constraint: Vehicle cannot be on non paths
+        '''
+        check = True
+        for step, k, l in self._iter(3):
+            if self.path_map[k][l] == 0:
+                check *= sum(self.solution[step, k, l, :]) == 0
+        return check
+
+    def _check_vehicles_continuous_constraint(self):
+        '''Constraint: The path needs to be continuous
+        '''
+        check = True
+        for vehicle in range(self.nb_entity):
+            for node in range(self.nb_nodes):
+                for step in range(self.nb_steps-1):
+                    check *= sum(self.solution[step, :, node, vehicle]) == sum(
+                        self.solution[step+1, node, :, vehicle])
+        return check
+
+    def _check_vehicle_action_per_step_constraint(self):
+        '''Constraint: Vehicle can only use one path per step
+        '''
+        check = True
+        for vehicle in range(self.nb_entity):
+            for step in range(self.nb_steps):
+                check *= sum(sum(self.solution[step, :, :, vehicle])) == 1
+        return check
+
+    def check_constraint(self, vehicle_start_constraint=True, vehicles_path_constraint=True, vehicles_continuous_constraint=True, vehicle_action_per_step_constraint=True):
+        '''Constraint: All constraints
+
+        Args:
+            limit_vehicle_constraint (bool, optional): Constraint: There is a limited total number of vehicles at each step. Defaults to True.
+            vehicle_start_constraint (bool, optional): Constraint: Each vehicle must start at designated places. Defaults to True.
+            vehicles_path_constraint (bool, optional): Constraint: Vehicle cannot be on non paths. Defaults to True.
+            vehicles_continuous_constraint (bool, optional): Constraint: The path needs to be continuous. Defaults to True.
+            vehicle_action_per_step_constraint (bool, optional): Constraint: Vehicle can only use one path per step. Defaults to True.
+        '''
+        check = True
+        if vehicle_start_constraint:
+            check *= self._check_vehicle_start_constraint()
+        if vehicles_path_constraint:
+            check *= self._check_vehicles_path_constraint()
+        if vehicles_continuous_constraint:
+            check *= self._check_vehicles_continuous_constraint()
+        if vehicle_action_per_step_constraint:
+            check *= self._check_vehicle_action_per_step_constraint()
+        return check
