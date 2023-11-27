@@ -23,6 +23,38 @@ class Solution:
         self.nb_entity = nb_entity
         self.solution = np.zeros((nb_steps, nb_nodes, nb_nodes, nb_entity))
 
+    def _iter(self, depth):
+        """Return iterator of indexes the solution using the solution shape
+
+        Args:
+            depth (int): depth of the iterator (ex: 1 return an iterator on step only)
+        """
+        if depth == 1:
+            return [i[0] for i in np.ndindex(self.solution.shape[0])]
+        return np.ndindex(self.solution.shape[:depth])
+
+    def _clip(self, step=None):
+        """Clip the solution to 0 1 values
+        """
+        if step:
+            self.solution[step] = np.clip(self.solution[step], 0, 1)
+        else:
+            self.solution = np.clip(self.solution, 0, 1)
+
+    def _shuffle_step(self, step: int, rate: int, path_map: np.ndarray):
+        """Shuffle a step of the solution
+
+        Args:
+            step (int): step to shuffle
+            rate (int): rate of the shuffle (0 to 1)
+            path_map (np.array): possible path on the map
+        """
+        for node_k, node_l in zip(range(self.nb_nodes), range(self.nb_nodes)):
+            if path_map[node_k, node_l]:
+                random_matrix = np.random.choice([-1, 1], self.nb_entity)
+                self.solution[step, node_k, node_l] += rate * random_matrix
+        self._clip(step)
+
     def shuffle(self, rate: int, path_map: np.ndarray) -> None:
         """Shuffle the solution
 
