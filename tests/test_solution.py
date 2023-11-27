@@ -18,13 +18,13 @@ NB_PASSENGER = 2
 NB_ENTITY = 2
 NB_VEHICLE = 1
 VEHICLE_CAPACITY = 1
-"""
-  0
- / \
-1 - 2
- \ /
-  3
-"""
+
+#  0
+# / \
+#1 - 2
+# \ /
+#  3
+
 PATH_MAP = np.array([[1, 1, 1, 0],
                     [1, 1, 1, 1],
                     [1, 1, 1, 1],
@@ -183,6 +183,90 @@ class TestRide(unittest.TestCase):
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 2), (1, 2, 2)]])
         self.assertTrue(ride.check_constraint(
             False, False, False, False, True))
+
+
+class TestDrive(unittest.TestCase):
+    """Drive class tests
+    """
+
+    def test_vehicle_start_constraint(self):
+        """Check vehicle start constraint
+
+        Tests:
+            - If vehicle start then true
+            - If vehicle do not start then false
+        """
+        drive = solution.Drive(NB_STEPS, NB_NODES, NB_VEHICLE, VEHICLE_CAPACITY,
+                               VEHICLE_START_POINTS, PATH_MAP)
+        # vehicle 0 and 1 start and finish in their positions
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
+        self.assertTrue(drive.check_constraint(
+            True, False, False, False))
+        # vehicle 0 don't start in good position but finish in good position and 1 does good
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 1, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
+        self.assertFalse(drive.check_constraint(
+            True, False, False, False))
+
+    def test_path_constraint(self):
+        """Check the path constraint
+
+        Tests:
+            - If vehicle is on path then true
+            - If vehicle is not on path then false
+        """
+        drive = solution.Drive(NB_STEPS, NB_NODES, NB_VEHICLE, VEHICLE_CAPACITY,
+                               VEHICLE_START_POINTS, PATH_MAP)
+        # vehicle 0 and 1 are on path
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
+        self.assertTrue(drive.check_constraint(
+            False, True, False, False))
+        # vehicle 0 is not on path
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 0, 3), (1, 3, 1)], [(0, 1, 1), (1, 1, 2)]])
+        self.assertFalse(drive.check_constraint(
+            False, True, False, False))
+
+    def test_continuous_constraint(self):
+        """Check if the path are continuous
+
+        Tests:
+            - If path is continuous then true
+            - If path is not continuous then false
+        """
+        drive = solution.Drive(NB_STEPS, NB_NODES, NB_VEHICLE, VEHICLE_CAPACITY,
+                               VEHICLE_START_POINTS, PATH_MAP)
+        # vehicle 0 and 1 have continuous paths
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 0, 1), (1, 1, 3)], [(0, 1, 1), (1, 1, 2)]])
+        self.assertTrue(drive.check_constraint(
+            False, False, True, False))
+        # vehicle 0 is not continuous
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 0, 0), (1, 2, 3)], [(0, 1, 1), (1, 1, 2)]])
+        self.assertFalse(drive.check_constraint(
+            False, False, True, False))
+
+    def test_action_per_step_constraint(self):
+        """Check that vehicle do only one action per step
+        Tests:
+            - If vehicle do only one action per step then true
+            - If vehicle do more than one action per step then false
+        """
+        drive = solution.Drive(NB_STEPS, NB_NODES, NB_VEHICLE, VEHICLE_CAPACITY,
+                               VEHICLE_START_POINTS, PATH_MAP)
+        # vehicle 0 and 1 do only one action per step
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
+        self.assertTrue(drive.check_constraint(
+            False, False, False, True))
+        # vehicle 0 do more than one action per step
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 0, 1), (0, 0, 2), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
+        self.assertFalse(drive.check_constraint(
+            False, False, False, True))
 
 
 if __name__ == '__main__':
