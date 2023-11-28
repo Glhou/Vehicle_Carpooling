@@ -14,9 +14,9 @@ from tests.utils import matrix_utils
 # Object arguments for tests
 NB_STEPS = 2
 NB_NODES = 4
-NB_PASSENGER = 2
+NB_PASSENGERS = 2
 NB_ENTITY = 2
-NB_VEHICLE = 1
+NB_VEHICLES = 1
 VEHICLE_CAPACITY = 1
 
 #  0
@@ -32,6 +32,26 @@ PATH_MAP = np.array([[1, 1, 1, 0],
 PASSENGER_START_POINTS = np.array([0, 1])
 PASSENGER_FINISH_POINTS = np.array([1, 2])
 VEHICLE_START_POINTS = np.array([0, 1])
+
+RIDE_PARAM = {
+    "nb_steps": NB_STEPS,
+    "nb_nodes": NB_NODES,
+    "nb_passengers": NB_PASSENGERS,
+    "passenger_start_points": PASSENGER_START_POINTS,
+    "passenger_finish_points": PASSENGER_FINISH_POINTS,
+    "path_map": PATH_MAP,
+    "nb_vehicles": NB_VEHICLES,
+    "vehicle_capacity": VEHICLE_CAPACITY
+}
+
+DRIVE_PARAM = {
+    "nb_steps": NB_STEPS,
+    "nb_nodes": NB_NODES,
+    "nb_vehicles": NB_VEHICLES,
+    "vehicle_capacity": VEHICLE_CAPACITY,
+    "vehicle_start_points": VEHICLE_START_POINTS,
+    "path_map": PATH_MAP
+}
 
 matrix_u = matrix_utils.MatrixUtils(NB_STEPS, NB_NODES, NB_ENTITY)
 
@@ -69,8 +89,8 @@ class TestSolution(unittest.TestCase):
         sol.shuffle(1, np.array([[1]]))
 
 
-class TestRide(unittest.TestCase):
-    """Ride class tests
+class TestRidePath(unittest.TestCase):
+    """RidePath class tests
     """
 
     def test_start_finish_constraint(self):
@@ -82,8 +102,7 @@ class TestRide(unittest.TestCase):
             - If passenger not start and finish then false
             - If passenger not start and not finish then false
         """
-        ride = solution.Ride(NB_STEPS, NB_NODES, NB_PASSENGER,
-                             PASSENGER_START_POINTS, PASSENGER_FINISH_POINTS, PATH_MAP, NB_VEHICLE, VEHICLE_CAPACITY)
+        ride = solution.RidePath(**RIDE_PARAM)
         # passenger 0 and 1 start and finish in their positions
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
@@ -112,8 +131,7 @@ class TestRide(unittest.TestCase):
             - If passenger is on path then true
             - If passenger is not on path then false
         """
-        ride = solution.Ride(NB_STEPS, NB_NODES, NB_PASSENGER,
-                             PASSENGER_START_POINTS, PASSENGER_FINISH_POINTS, PATH_MAP, NB_VEHICLE, VEHICLE_CAPACITY)
+        ride = solution.RidePath(**RIDE_PARAM)
         # passenger 0 and 1 are on path
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
@@ -133,8 +151,9 @@ class TestRide(unittest.TestCase):
             - If path is not continuous then false
         """
         passenger_finish_points = np.array([3, 1])
-        ride = solution.Ride(NB_STEPS, NB_NODES, NB_PASSENGER,
-                             PASSENGER_START_POINTS, passenger_finish_points, PATH_MAP, NB_VEHICLE, VEHICLE_CAPACITY)
+        ride_param = RIDE_PARAM.copy()
+        ride_param["passenger_finish_points"] = passenger_finish_points
+        ride = solution.RidePath(**RIDE_PARAM)
         # passenger 0 and 1 have continuous paths
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 3)], [(0, 1, 1), (1, 1, 2)]])
@@ -152,8 +171,7 @@ class TestRide(unittest.TestCase):
             - If passenger do only one action per step then true
             - If passenger do more than one action per step then false
         """
-        ride = solution.Ride(NB_STEPS, NB_NODES, NB_PASSENGER,
-                             PASSENGER_START_POINTS, PASSENGER_FINISH_POINTS, PATH_MAP, NB_VEHICLE, VEHICLE_CAPACITY)
+        ride = solution.RidePath(**RIDE_PARAM)
         # passenger 0 and 1 do only one action per step
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
@@ -171,8 +189,7 @@ class TestRide(unittest.TestCase):
             - If number of vehicle is under the limit then true
             - If number of vehicle is over the limit then false
         """
-        ride = solution.Ride(NB_STEPS, NB_NODES, NB_PASSENGER,
-                             PASSENGER_START_POINTS, PASSENGER_FINISH_POINTS, PATH_MAP, NB_VEHICLE, VEHICLE_CAPACITY)
+        ride = solution.RidePath(**RIDE_PARAM)
         # 1 vehicles
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
@@ -196,8 +213,7 @@ class TestDrive(unittest.TestCase):
             - If vehicle start then true
             - If vehicle do not start then false
         """
-        drive = solution.Drive(NB_STEPS, NB_NODES, NB_VEHICLE, VEHICLE_CAPACITY,
-                               VEHICLE_START_POINTS, PATH_MAP)
+        drive = solution.Drive(**DRIVE_PARAM)
         # vehicle 0 and 1 start and finish in their positions
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
@@ -216,8 +232,7 @@ class TestDrive(unittest.TestCase):
             - If vehicle is on path then true
             - If vehicle is not on path then false
         """
-        drive = solution.Drive(NB_STEPS, NB_NODES, NB_VEHICLE, VEHICLE_CAPACITY,
-                               VEHICLE_START_POINTS, PATH_MAP)
+        drive = solution.Drive(**DRIVE_PARAM)
         # vehicle 0 and 1 are on path
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
@@ -236,8 +251,7 @@ class TestDrive(unittest.TestCase):
             - If path is continuous then true
             - If path is not continuous then false
         """
-        drive = solution.Drive(NB_STEPS, NB_NODES, NB_VEHICLE, VEHICLE_CAPACITY,
-                               VEHICLE_START_POINTS, PATH_MAP)
+        drive = solution.Drive(**DRIVE_PARAM)
         # vehicle 0 and 1 have continuous paths
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 3)], [(0, 1, 1), (1, 1, 2)]])
@@ -255,8 +269,7 @@ class TestDrive(unittest.TestCase):
             - If vehicle do only one action per step then true
             - If vehicle do more than one action per step then false
         """
-        drive = solution.Drive(NB_STEPS, NB_NODES, NB_VEHICLE, VEHICLE_CAPACITY,
-                               VEHICLE_START_POINTS, PATH_MAP)
+        drive = solution.Drive(**DRIVE_PARAM)
         # vehicle 0 and 1 do only one action per step
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
