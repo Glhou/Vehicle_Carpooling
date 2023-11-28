@@ -26,7 +26,7 @@ class MatrixUtils:
         """Make a matrix with desired paths
 
         Args:
-            passenger_paths (list(tuple)): list of passenger's list of paths (tuples: step, k, l)
+            passenger_paths (list(list(tuple))): list of passenger's list of paths (tuples: step, k, l)
 
         Returns:
             np.ndarray: matrix with desired paths
@@ -36,4 +36,21 @@ class MatrixUtils:
         for passenger, paths_list in enumerate(passenger_paths):
             for path in paths_list:
                 matrix[path[0], path[1], path[2], passenger] = 1
+        return matrix
+
+    def make_vehicle_matrix(self, vehicle_paths: list[list[tuple]]) -> np.ndarray:
+        """Make a matrix with desired paths
+
+        Args:
+            vehicle_paths (list(list(tuple))): list of vehicle's list of paths (tuples: step, k, l, passenger)
+
+        Returns:
+            np.ndarray: matrix with desired paths
+        """
+        matrix = np.zeros((self.nb_steps, self.nb_nodes,
+                          self.nb_nodes, self.nb_entity))
+        matrix = matrix - 1
+        for vehicle, paths_list in enumerate(vehicle_paths):
+            for path in paths_list:
+                matrix[path[0], path[1], path[2], path[3]] = vehicle
         return matrix

@@ -35,3 +35,21 @@ class TestMatrixUtils(unittest.TestCase):
             [[0, 0], [0, 0], [0, 0], [0, 0]]
         ]])
         self.assertTrue(np.array_equal(matrix, expected_matrix))
+
+    def test_make_vehicle_matrix(self):
+        """test the make_vehicle_matrix funciton
+        """
+        matrix = matrix_u.make_vehicle_matrix(
+            [[(0, 0, 1, 0), (1, 1, 2, 1)], [(0, 0, 1, 1), (1, 1, 2, 0)]])
+        expected_matrix = np.array([[
+            [[-1, -1], [0, 1], [-1, -1], [-1, -1]],
+            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
+            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
+            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
+        ], [
+            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
+            [[-1, -1], [-1, -1], [1, 0], [-1, -1]],
+            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
+            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
+        ]])
+        self.assertTrue(np.array_equal(matrix, expected_matrix))
