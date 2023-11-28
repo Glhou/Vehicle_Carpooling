@@ -92,7 +92,7 @@ class RidePath(Solution):
         self.nb_vehicles = nb_vehicles
         self.vehicle_capacity = vehicle_capacity
 
-    def _check_start_finish_constraint(self):
+    def _check_start_finish_constraint(self) -> bool:
         '''Constraint: Each passenger must start and finish in designated places
         '''
         check = True
@@ -109,7 +109,7 @@ class RidePath(Solution):
                         self.solution[:, self.passenger_finish_points[passenger], l, passenger]) == 0
         return check
 
-    def _check_path_constraint(self):
+    def _check_path_constraint(self) -> bool:
         '''Constraint: Passengers cannot be on non paths (use R and M)
         '''
         check = True
@@ -118,7 +118,7 @@ class RidePath(Solution):
                 check *= sum(self.solution[step, k, l, :]) == 0
         return check
 
-    def _check_continuous_constraint(self):
+    def _check_continuous_constraint(self) -> bool:
         '''Constraint: The path needs to be continuous
         '''
         check = True
@@ -130,7 +130,7 @@ class RidePath(Solution):
                             self.solution[step+1, node, :, passenger])
         return check
 
-    def _check_action_per_step_constraint(self):
+    def _check_action_per_step_constraint(self) -> bool:
         '''Constraint: Passengers can only use one path per step
         '''
         check = True
@@ -140,7 +140,7 @@ class RidePath(Solution):
                 check *= sum(sum(self.solution[step, :, :, passenger])) == 1
         return check
 
-    def _check_limit_vehicle_constraint(self):
+    def _check_limit_vehicle_constraint(self) -> bool:
         '''Constraint: There is a limited total number of vehicles at each step
         '''
         check = True
@@ -154,7 +154,7 @@ class RidePath(Solution):
             check *= nb_used_vehicles <= self.nb_vehicles
         return bool(check)
 
-    def check_constraint(self, start_finish_constraint=True, path_constraint=True, continuous_constraint=True, action_per_step_constraint=True, limit_vehicle_constraint=True):
+    def check_constraint(self, start_finish_constraint=True, path_constraint=True, continuous_constraint=True, action_per_step_constraint=True, limit_vehicle_constraint=True) -> bool:
         '''Constraint: All constraints
 
         Args:
@@ -198,30 +198,37 @@ class RideVehicle(Solution):
         self.nb_vehicles = nb_vehicles
         self.vehicle_capacity = vehicle_capacity
 
-    def _check_ride_link_constraint(self, ride_path: RidePath):
+    def _check_ride_link_constraint(self, ride_path: RidePath) -> bool:
         '''Constraint: passenger use car only when they use the path and contrary
         '''
         check = True
         for step, k, l, passenger in self._iter():
-            if ride_path.solution[step, k, l, passenger] == 1:
-                check *= self.solution[step, k, l,
-                                       passenger] >= 0
-            else:
-                check *= self.solution[step, k, l, passenger] == -1
+            if k != l:
+                if ride_path.solution[step, k, l, passenger] == 1:
+                    check *= self.solution[step, k, l,
+                                           passenger] >= 0
+                else:
+                    check *= self.solution[step, k, l, passenger] == -1
         return check
 
-    def _check_vehicle_number_link_ride_constraint(self, ride_path: RidePath):
+    def _check_vehicle_number_link_ride_constraint(self, ride_path: RidePath) -> bool:
         '''Constraint: vehicle number is the same in ridePath and rideVehicle
         '''
         check = True
         for step, k, l in self._iter(3):
-            nb_vehicle_self = len(np.unique(self.solution[step, k, l]))
-            nb_vehicle_ride_path = math.ceil(
-                sum(ride_path.solution[step, k, l, :])/self.vehicle_capacity)
-            check *= nb_vehicle_self == nb_vehicle_ride_path
+            if k != l:
+                without_none = np.delete(self.solution[step, k, l], np.where(
+                    self.solution[step, k, l] == -1))
+                nb_vehicle_self = len(
+                    np.unique(without_none))
+                nb_vehicle_ride_path = math.ceil(
+                    sum(ride_path.solution[step, k, l, :])/self.vehicle_capacity)
+                print((step, k, l), nb_vehicle_ride_path, nb_vehicle_self,
+                      np.unique(np.delete(self.solution[step, k, l], np.where(self.solution[step, k, l] == -1))))
+                check *= nb_vehicle_self == nb_vehicle_ride_path
         return check
 
-    def _check_vehicle_capacity_constraint(self):
+    def _check_vehicle_capacity_constraint(self) -> bool:
         '''Constraint: Vehicle capacity limit
         '''
         check = True
@@ -235,7 +242,7 @@ class RideVehicle(Solution):
                         check *= nb_passenger_in_vehicle <= self.vehicle_capacity
         return bool(check)
 
-    def _check_vehicle_only_in_one_edge_condition(self):
+    def _check_vehicle_only_in_one_edge_condition(self) -> bool:
         """Constraint: a vehicle can only be in a edge a a time at maximum
         """
         check = True
@@ -250,6 +257,28 @@ class RideVehicle(Solution):
                                     nb_occurence_in_edges += 1
                 check *= nb_occurence_in_edges <= 1
         return bool(check)
+
+    def check_constraint(self, ride_path: RidePath, ride_link_constraint=True, vehicle_number_link_ride_constraint=True, vehicle_capacity_constraint=True, vehicle_only_in_one_edge_condition=True) -> bool:
+        '''Constraint: All constraints
+
+        Args:
+            ride_path (RidePath): ride path object
+            ride_link_constraint (bool, optional): Constraint: passenger use car only when they use the path and contrary. Defaults to True.
+            vehicle_number_link_ride_constraint (bool, optional): Constraint: vehicle number is the same in ridePath and rideVehicle. Defaults to True.
+            vehicle_capacity_constraint (bool, optional): Constraint: Vehicle capacity limit. Defaults to True.
+            vehicle_only_in_one_edge_condition (bool, optional): Constraint: a vehicle can only be in a edge a a time at maximum. Defaults to True.
+        '''
+        check = True
+        if ride_link_constraint:
+            check *= self._check_ride_link_constraint(ride_path)
+        if vehicle_number_link_ride_constraint:
+            check *= self._check_vehicle_number_link_ride_constraint(
+                ride_path)
+        if vehicle_capacity_constraint:
+            check *= self._check_vehicle_capacity_constraint()
+        if vehicle_only_in_one_edge_condition:
+            check *= self._check_vehicle_only_in_one_edge_condition()
+        return check
 
 
 class Drive(Solution):
@@ -272,7 +301,7 @@ class Drive(Solution):
         self.vehicle_start_points = vehicle_start_points
         self.path_map = path_map
 
-    def _check_vehicle_start_constraint(self):
+    def _check_vehicle_start_constraint(self) -> bool:
         '''Constraint: Each vehicle must start at designated places
         '''
         check = True
@@ -281,7 +310,7 @@ class Drive(Solution):
                          self.vehicle_start_points[vehicle], :, vehicle]) == 1
         return check
 
-    def _check_vehicles_path_constraint(self):
+    def _check_vehicles_path_constraint(self) -> bool:
         '''Constraint: Vehicle cannot be on non paths
         '''
         check = True
@@ -290,7 +319,7 @@ class Drive(Solution):
                 check *= sum(self.solution[step, k, l, :]) == 0
         return check
 
-    def _check_vehicles_continuous_constraint(self):
+    def _check_vehicles_continuous_constraint(self) -> bool:
         '''Constraint: The path needs to be continuous
         '''
         check = True
@@ -301,7 +330,7 @@ class Drive(Solution):
                         self.solution[step+1, node, :, vehicle])
         return check
 
-    def _check_vehicle_action_per_step_constraint(self):
+    def _check_vehicle_action_per_step_constraint(self) -> bool:
         '''Constraint: Vehicle can only use one path per step
         '''
         check = True
@@ -310,7 +339,7 @@ class Drive(Solution):
                 check *= sum(sum(self.solution[step, :, :, vehicle])) == 1
         return check
 
-    def check_constraint(self, vehicle_start_constraint=True, vehicles_path_constraint=True, vehicles_continuous_constraint=True, vehicle_action_per_step_constraint=True):
+    def check_constraint(self, vehicle_start_constraint=True, vehicles_path_constraint=True, vehicles_continuous_constraint=True, vehicle_action_per_step_constraint=True) -> bool:
         '''Constraint: All constraints
 
         Args:
