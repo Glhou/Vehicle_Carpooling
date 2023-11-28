@@ -67,12 +67,12 @@ class Solution:
             self._shuffle_step(step, rate, path_map)
 
 
-class Ride(Solution):
-    """Ride class
+class RidePath(Solution):
+    """RidePath class
     """
 
-    def __init__(self, nb_steps: int, nb_nodes: int, nb_passengers: int, passenger_start_points: np.ndarray, passenger_finish_points: np.ndarray, path_map: np.ndarray, nb_vehicle: int, vehicle_capacity: int) -> None:
-        """Initialize the Ride object
+    def __init__(self, nb_steps: int, nb_nodes: int, nb_passengers: int, passenger_start_points: np.ndarray, passenger_finish_points: np.ndarray, path_map: np.ndarray, nb_vehicles: int, vehicle_capacity: int) -> None:
+        """Initialize the RidePath object
 
         Args:
             nb_steps (int): number of maximum steps
@@ -81,12 +81,14 @@ class Ride(Solution):
             passenger_start_points (np.ndarray): passenger start points
             passenger_finish_points (np.ndarray): passenger finish points
             path_map (np.ndarray): possible path on the map
+            nb_vehicles (int): number of vehicles
+            vehicle_capacity (int): vehicle capacity
         """
         super().__init__(nb_steps, nb_nodes, nb_passengers)
         self.passenger_start_points = passenger_start_points
         self.passenger_finish_points = passenger_finish_points
         self.path_map = path_map
-        self.nb_vehicle = nb_vehicle
+        self.nb_vehicles = nb_vehicles
         self.vehicle_capacity = vehicle_capacity
 
     def _check_start_finish_constraint(self):
@@ -173,6 +175,80 @@ class Ride(Solution):
         if limit_vehicle_constraint:
             check *= self._check_limit_vehicle_constraint()
         return check
+
+
+class RideVehicle(Solution):
+    """RideVehicle class
+    """
+
+    def __init__(self, nb_steps: int, nb_nodes: int, nb_passengers: int, path_map: np.ndarray, nb_vehicles: int, vehicle_capacity: int):
+        """Initialize the RideVehicle object
+
+        Args:
+            nb_steps (int): number of maximum steps
+            nb_nodes (int): number of nodes
+            nb_passengers (int): number of passengers
+            path_map (np.ndarray): possible path on the map
+            nb_vehicles (int): number of vehicles
+            vehicle_capacity (int): vehicle capacity
+        """
+        super().__init__(nb_steps, nb_nodes, nb_passengers)
+        self.path_map = path_map
+        self.nb_vehicles = nb_vehicles
+        self.vehicle_capacity = vehicle_capacity
+
+    def _check_ride_link_constraint(self, ride_path: RidePath):
+        '''Constraint: passenger use car only when they use the path and contrary
+        '''
+        check = True
+        for step, k, l, passenger in self._iter():
+            if ride_path.solution[step, k, l, passenger] == 1:
+                check *= self.solution[step, k, l,
+                                       passenger] >= 0
+            else:
+                check *= self.solution[step, k, l, passenger] == -1
+        return check
+
+    def _check_vehicle_number_link_ride_constraint(self, ride_path: RidePath):
+        '''Constraint: vehicle number is the same in ridePath and rideVehicle
+        '''
+        check = True
+        for step, k, l in self._iter(3):
+            nb_vehicle_self = len(np.unique(self.solution[step, k, l]))
+            nb_vehicle_ride_path = math.ceil(
+                sum(ride_path.solution[step, k, l, :])/self.vehicle_capacity)
+            check *= nb_vehicle_self == nb_vehicle_ride_path
+        return check
+
+    def _check_vehicle_capacity_constraint(self):
+        '''Constraint: Vehicle capacity limit
+        '''
+        check = True
+        for step, k, l in self._iter(3):
+            if k != l:
+                if self.path_map[k, l]:
+                    nb_passenger_in_vehicle = 0
+                    for vehicle_id in range(self.nb_vehicles):
+                        nb_passenger_in_vehicle = np.count_nonzero(
+                            self.solution[step, k, l] == vehicle_id)
+                        check *= nb_passenger_in_vehicle <= self.vehicle_capacity
+        return bool(check)
+
+    def _check_vehicle_only_in_one_edge_condition(self):
+        """Constraint: a vehicle can only be in a edge a a time at maximum
+        """
+        check = True
+        for step in range(self.nb_steps):
+            for vehicle_id in range(self.nb_vehicles):
+                nb_occurence_in_edges = 0
+                for k in range(self.nb_nodes):
+                    for l in range(self.nb_nodes):
+                        if k != l:
+                            if self.path_map[k, l]:
+                                if vehicle_id in self.solution[step, k, l]:
+                                    nb_occurence_in_edges += 1
+                check *= nb_occurence_in_edges <= 1
+        return bool(check)
 
 
 class Drive(Solution):
