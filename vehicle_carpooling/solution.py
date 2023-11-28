@@ -151,7 +151,7 @@ class RidePath(Solution):
                     nb_used_vehicles_on_edge = math.ceil(
                         sum(self.solution[step, k, l, :])/self.vehicle_capacity)
                     nb_used_vehicles += nb_used_vehicles_on_edge
-            check *= nb_used_vehicles <= self.nb_vehicle
+            check *= nb_used_vehicles <= self.nb_vehicles
         return bool(check)
 
     def check_constraint(self, start_finish_constraint=True, path_constraint=True, continuous_constraint=True, action_per_step_constraint=True, limit_vehicle_constraint=True):
