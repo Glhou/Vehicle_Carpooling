@@ -76,26 +76,25 @@ class TestSolution(unittest.TestCase):
             - the difference is less than rate
             - the shuffle is the same for rate == 0
         """
-        sol = solution.Solution(NB_STEPS, NB_NODES, NB_ENTITY)
-        save_sol = solution.Solution(NB_STEPS, NB_NODES, NB_ENTITY)
-        sol.shuffle(0, PATH_MAP)
-        self.assertTrue(np.all(sol.solution == save_sol.solution))
-        sol.shuffle(0.5, PATH_MAP)
+        sol = solution.Solution(NB_STEPS, NB_NODES, NB_ENTITY, PATH_MAP)
+        save_sol = solution.Solution(NB_STEPS, NB_NODES, NB_ENTITY, PATH_MAP)
+        sol.shuffle(0)
+        self.assertTrue(np.all(sol.discrete_solution ==
+                        save_sol.discrete_solution))
+        sol.shuffle(0.5)
         self.assertTrue(
-            np.all(np.abs(save_sol.solution - sol.solution) <= 0.5))
+            np.all(np.abs(save_sol.discrete_solution - sol.discrete_solution) <= 0.5))
 
     def test_shuffle(self):
         """Shuffle_test
 
         Tests:
             -  the value is between 0 and 1
-            - shuffle with extreme value 1,1,1
         """
-        sol = solution.Solution(NB_STEPS, NB_NODES, NB_ENTITY)
+        sol = solution.Solution(NB_STEPS, NB_NODES, NB_ENTITY, PATH_MAP)
+        sol.shuffle(1)
         self.assertTrue(np.all(sol.solution >= 0))
         self.assertTrue(np.all(sol.solution <= 1))
-        sol = solution.Solution(1, 1, 1)
-        sol.shuffle(1, np.array([[1]]))
 
 
 class TestRidePath(unittest.TestCase):

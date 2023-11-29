@@ -11,17 +11,21 @@ class Solution:
     """Solution class
     """
 
-    def __init__(self, nb_steps, nb_nodes, nb_entity) -> None:
+    def __init__(self, nb_steps, nb_nodes, nb_entity, path_map) -> None:
         """Initialize the Solution object
 
         Args:
             nb_steps (int): number of maximum steps
             nb_nodes (int): number of nodes
             nb_entity (int): number of entity (passenger / vehicles)
+            path_map (np.ndarray): possible path on the map
         """
         self.nb_steps = nb_steps
         self.nb_nodes = nb_nodes
         self.nb_entity = nb_entity
+        self.path_map = path_map
+        self.discrete_solution = np.zeros(
+            (nb_steps, nb_nodes, nb_nodes, nb_entity))
         self.solution = np.zeros((nb_steps, nb_nodes, nb_nodes, nb_entity))
 
     def _iter(self, depth=4):
@@ -38,9 +42,12 @@ class Solution:
         """Clip the solution to 0 1 values
         """
         if step:
+            self.discrete_solution[step] = np.clip(
+                self.discrete_solution[step], 0, 1)
             self.solution[step] = np.clip(self.solution[step], 0, 1)
         else:
             self.solution = np.clip(self.solution, 0, 1)
+            self.discrete_solution = np.clip(self.discrete_solution, 0, 1)
 
     def _shuffle_step(self, step: int, rate: int, path_map: np.ndarray):
         """Shuffle a step of the solution
@@ -54,7 +61,9 @@ class Solution:
             for node_l in range(self.nb_nodes):
                 if path_map[node_k, node_l]:
                     random_matrix = np.random.choice([-1, 1], self.nb_entity)
-                    self.solution[step, node_k, node_l] += rate * random_matrix
+                    self.discrete_solution[step, node_k,
+                                           node_l] += rate * random_matrix
+        self._update_solution()
         self._clip(step)
 
     def shuffle(self, rate: int, path_map: np.ndarray) -> None:
@@ -66,6 +75,15 @@ class Solution:
         """
         for step, _ in enumerate(self.solution):
             self._shuffle_step(step, rate, path_map)
+
+    def _update_solution(self):
+        """Update the solution
+        """
+        for step, node_k, node_l, entity in self._iter():
+            if self.solution[step, node_k, node_l, entity] >= 0.5:
+                self.discrete_solution[step, node_k, node_l, entity] = 1
+            else:
+                self.discrete_solution[step, node_k, node_l, entity] = 0
 
 
 class RidePath(Solution):
@@ -85,10 +103,9 @@ class RidePath(Solution):
             nb_vehicles (int): number of vehicles
             vehicle_capacity (int): vehicle capacity
         """
-        super().__init__(nb_steps, nb_nodes, nb_passengers)
+        super().__init__(nb_steps, nb_nodes, nb_passengers, path_map)
         self.passenger_start_points = passenger_start_points
         self.passenger_finish_points = passenger_finish_points
-        self.path_map = path_map
         self.nb_vehicles = nb_vehicles
         self.vehicle_capacity = vehicle_capacity
 
@@ -193,8 +210,7 @@ class RideVehicle(Solution):
             nb_vehicles (int): number of vehicles
             vehicle_capacity (int): vehicle capacity
         """
-        super().__init__(nb_steps, nb_nodes, nb_passengers)
-        self.path_map = path_map
+        super().__init__(nb_steps, nb_nodes, nb_passengers, path_map)
         self.nb_vehicles = nb_vehicles
         self.vehicle_capacity = vehicle_capacity
 
@@ -296,10 +312,9 @@ class Drive(Solution):
             vehicle_start_points (np.ndarray): list of vehicle start points
             path_map (np.ndarray): possible path on the map
         """
-        super().__init__(nb_steps, nb_nodes, nb_vehicles)
+        super().__init__(nb_steps, nb_nodes, nb_vehicles, path_map)
         self.vehicle_capacity = vehicle_capacity
         self.vehicle_start_points = vehicle_start_points
-        self.path_map = path_map
 
     def _check_vehicle_start_constraint(self) -> bool:
         '''Constraint: Each vehicle must start at designated places
