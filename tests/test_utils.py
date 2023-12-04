@@ -6,7 +6,7 @@ import numpy as np
 
 from tests.utils import matrix_utils
 
-NB_STEPS = 2
+NB_STEPS = 3
 NB_NODES = 4
 NB_ENTITY = 2
 
@@ -24,15 +24,9 @@ class TestMatrixUtils(unittest.TestCase):
         matrix = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
         expected_matrix = np.array([[
-            [[0, 0], [1, 0], [0, 0], [0, 0]],
-            [[0, 0], [0, 1], [0, 0], [0, 0]],
-            [[0, 0], [0, 0], [0, 0], [0, 0]],
-            [[0, 0], [0, 0], [0, 0], [0, 0]]
+            [0, 1], [1, 1], [-1, -1]
         ], [
-            [[0, 0], [0, 0], [0, 0], [0, 0]],
-            [[0, 0], [1, 0], [0, 1], [0, 0]],
-            [[0, 0], [0, 0], [0, 0], [0, 0]],
-            [[0, 0], [0, 0], [0, 0], [0, 0]]
+            [1, 1], [1, 2], [-1, -1]
         ]])
         self.assertTrue(np.array_equal(matrix, expected_matrix))
 
@@ -40,16 +34,10 @@ class TestMatrixUtils(unittest.TestCase):
         """test the make_vehicle_matrix funciton
         """
         matrix = matrix_u.make_vehicle_matrix(
-            [[(0, 0, 1, 0), (1, 1, 2, 1)], [(0, 0, 1, 1), (1, 1, 2, 0)]])
+            [[(0, 0), (1,  1)], [(0,  1), (1, 0)]])
         expected_matrix = np.array([[
-            [[-1, -1], [0, 1], [-1, -1], [-1, -1]],
-            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
-            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
-            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
+            0, 1, -1
         ], [
-            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
-            [[-1, -1], [-1, -1], [1, 0], [-1, -1]],
-            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
-            [[-1, -1], [-1, -1], [-1, -1], [-1, -1]],
+            1, 0, -1
         ]])
         self.assertTrue(np.array_equal(matrix, expected_matrix))

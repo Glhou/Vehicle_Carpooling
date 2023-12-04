@@ -68,33 +68,7 @@ matrix_u = matrix_utils.MatrixUtils(NB_STEPS, NB_NODES, NB_ENTITY)
 class TestSolution(unittest.TestCase):
     """ Solution class tests
     """
-
-    def test_rate_shuffle(self):
-        """ Shuffle_rate_test
-
-        Tests:
-            - the difference is less than rate
-            - the shuffle is the same for rate == 0
-        """
-        sol = solution.Solution(NB_STEPS, NB_NODES, NB_ENTITY, PATH_MAP)
-        save_sol = solution.Solution(NB_STEPS, NB_NODES, NB_ENTITY, PATH_MAP)
-        sol.shuffle(0)
-        self.assertTrue(np.all(sol.discrete_solution ==
-                        save_sol.discrete_solution))
-        sol.shuffle(0.5)
-        self.assertTrue(
-            np.all(np.abs(save_sol.discrete_solution - sol.discrete_solution) <= 0.5))
-
-    def test_shuffle(self):
-        """Shuffle_test
-
-        Tests:
-            -  the value is between 0 and 1
-        """
-        sol = solution.Solution(NB_STEPS, NB_NODES, NB_ENTITY, PATH_MAP)
-        sol.shuffle(1)
-        self.assertTrue(np.all(sol.solution >= 0))
-        self.assertTrue(np.all(sol.solution <= 1))
+    ...
 
 
 class TestRidePath(unittest.TestCase):
@@ -115,22 +89,22 @@ class TestRidePath(unittest.TestCase):
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
         self.assertTrue(ride.check_constraint(
-            True, False, False, False, False))
+            True, False, False, False))
         # passenger 0 start but do not finish in good position, 1 does
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 2)], [(0, 1, 1), (1, 1, 2)]])
         self.assertFalse(ride.check_constraint(
-            True, False, False, False, False))
+            True, False, False, False))
         # passenger 0 don't start in good position but finish in good position and 1 does good
         ride.solution = matrix_u.make_matrix(
             [[(0, 1, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
         self.assertFalse(ride.check_constraint(
-            True, False, False, False, False))
+            True, False, False, False))
         # passenger 0 is not starting nor finishing in good positions
         ride.solution = matrix_u.make_matrix(
             [[(0, 3, 1), (1, 3, 2)], [(0, 1, 1), (1, 1, 2)]])
         self.assertFalse(ride.check_constraint(
-            True, False, False, False, False))
+            True, False, False, False))
 
     def test_path_constraint(self):
         """Check the path constraint
@@ -144,12 +118,12 @@ class TestRidePath(unittest.TestCase):
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
         self.assertTrue(ride.check_constraint(
-            False, True, False, False, False))
+            False, True, False, False))
         # passenger 0 is not on path
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 3), (1, 3, 1)], [(0, 1, 1), (1, 1, 2)]])
         self.assertFalse(ride.check_constraint(
-            False, True, False, False, False))
+            False, True, False, False))
 
     def test_continuous_constraint(self):
         """Check if the path are continuous
@@ -166,30 +140,12 @@ class TestRidePath(unittest.TestCase):
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 3)], [(0, 1, 1), (1, 1, 2)]])
         self.assertTrue(ride.check_constraint(
-            False, False, True, False, False))
+            False, False, True, False))
         # passenger 0 is not continuous
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 0), (1, 2, 3)], [(0, 1, 1), (1, 1, 2)]])
         self.assertFalse(ride.check_constraint(
-            False, False, True, False, False))
-
-    def test_action_per_step_constraint(self):
-        """Check that passenger do only one action per step
-        Tests:
-            - If passenger do only one action per step then true
-            - If passenger do more than one action per step then false
-        """
-        ride = solution.RidePath(**RIDE_PATH_PARAM)
-        # passenger 0 and 1 do only one action per step
-        ride.solution = matrix_u.make_matrix(
-            [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
-        self.assertTrue(ride.check_constraint(
-            False, False, False, True, False))
-        # passenger 0 do more than one action per step
-        ride.solution = matrix_u.make_matrix(
-            [[(0, 0, 1), (0, 0, 2), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
-        self.assertFalse(ride.check_constraint(
-            False, False, False, True, False))
+            False, False, True, False))
 
     def test_vehicle_limit_constraint(self):
         """Check if the number of vehicle is under the limit
@@ -202,12 +158,12 @@ class TestRidePath(unittest.TestCase):
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
         self.assertTrue(ride.check_constraint(
-            False, False, False, False, True))
+            False, False, False, True))
         # 2 vehicles
         ride.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 2), (1, 2, 2)]])
-        self.assertTrue(ride.check_constraint(
-            False, False, False, False, True))
+        self.assertFalse(ride.check_constraint(
+            False, False, False, True))
 
 
 class TestRideVehicle(unittest.TestCase):
@@ -227,13 +183,13 @@ class TestRideVehicle(unittest.TestCase):
         ride_path.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
-            [[(0, 0, 1, 0), (1, 1, 2, 1)]]
+            [[(0, 0)], [(1, 1)]]
         )
         self.assertTrue(ride_vehicle.check_constraint(
             ride_path, True, False, False, False))
         # passenger 0 is using no car but using the path
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
-            [[(1, 1, 2, 1)]]
+            [[(1, 1)]]
         )
         self.assertFalse(ride_vehicle.check_constraint(
             ride_path, True, False, False, False))
@@ -261,8 +217,9 @@ class TestRideVehicle(unittest.TestCase):
         ride_path.solution = s_matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 0, 1), (1, 1, 2)], [(0, 1, 2), (1, 2, 3)]])
         ride_vehicle.solution = s_matrix_u.make_vehicle_matrix(
-            [[(0, 0, 1, 0), (0, 0, 1, 1), (1, 1, 2, 1)],
-             [(0, 1, 2, 2), (1, 2, 3, 2)]]
+            [[(0, 0)],
+             [(0, 0), (1, 0)],
+             [(0, 1), (1, 1)]]
         )
         self.assertTrue(ride_vehicle.check_constraint(
             ride_path, False, True, False, False))
@@ -270,8 +227,9 @@ class TestRideVehicle(unittest.TestCase):
         ride_path.solution = s_matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)], [(0, 1, 2), (1, 2, 3)]])
         ride_vehicle.solution = s_matrix_u.make_vehicle_matrix(
-            [[(0, 0, 1, 0), (1, 1, 2, 1)],
-             [(0, 1, 2, 2), (1, 2, 3, 2)]]
+            [[(0, 0)],
+             [(1, 0)],
+             [(0, 1), (1,  1)]]
         )
         self.assertTrue(ride_vehicle.check_constraint(
             ride_path, False, True, False, False))
@@ -279,8 +237,9 @@ class TestRideVehicle(unittest.TestCase):
         ride_path.solution = s_matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 0, 1), (1, 1, 2)], [(0, 0, 1), (1, 1, 3)]])
         ride_vehicle.solution = s_matrix_u.make_vehicle_matrix(
-            [[(0, 0, 1, 0), (1, 1, 2, 1), (0, 0, 1, 2)],
-             [(1, 1, 3, 2)]]
+            [[(0, 0)],
+             [(0, 0), (1, 0)],
+             [(0, 0), (1, 1)]]
         )
         self.assertFalse(ride_vehicle.check_constraint(
             ride_path, False, True, False, False))
@@ -295,13 +254,13 @@ class TestRideVehicle(unittest.TestCase):
         ride_vehicle = solution.RideVehicle(**RIDE_VEHICLE_PARAM)
         # vehicle 0 is not exeeding the capacity at step 0
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
-            [[(0, 0, 1, 0)]]
+            [[(0, 0)]]
         )
         self.assertTrue(ride_vehicle.check_constraint(
             None, False, False, True, False))
         # vehicle 0 is exeeding the capacity
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
-            [[(0, 0, 1, 0), (0, 0, 1, 1)]]
+            [[(0, 0)], [(0, 0)]]
         )
         self.assertFalse(ride_vehicle.check_constraint(
             None, False, False, True, False))
@@ -314,18 +273,26 @@ class TestRideVehicle(unittest.TestCase):
             - If all vehicles are in several edge at any steps then false
         """
         ride_vehicle = solution.RideVehicle(**RIDE_VEHICLE_PARAM)
+        ride_path = solution.RidePath(**RIDE_PATH_PARAM)
         # vehicle 0 is only in one edge at each steps
+        ride_path.solution = matrix_u.make_matrix(
+            [[(0, 0, 1), (1, 1, 1)], [(0, 0, 1), (1, 1, 1)]]
+        )
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
-            [[(0, 0, 1, 0), (1, 1, 2, 0)]]
+            [[(0, 0)],
+             [(0, 0)]]
         )
         self.assertTrue(ride_vehicle.check_constraint(
-            None, False, False, False, True))
+            ride_path, False, False, False, True))
         # vehicle 0 is in several edge at step 0
+        ride_path.solution = matrix_u.make_matrix(
+            [[(0, 0, 1), (1, 1, 1)], [(0, 1, 2), (1, 2, 2)]]
+        )
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
-            [[(0, 0, 1, 0), (0, 1, 2, 1), (1, 1, 2, 0)]]
+            [[(0, 0)], [(0, 0)]]
         )
         self.assertFalse(ride_vehicle.check_constraint(
-            None, False, False, False, True))
+            ride_path, False, False, False, True))
 
 
 class TestDrive(unittest.TestCase):
@@ -344,12 +311,12 @@ class TestDrive(unittest.TestCase):
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
         self.assertTrue(drive.check_constraint(
-            True, False, False, False))
+            True, False, False))
         # vehicle 0 don't start in good position but finish in good position and 1 does good
         drive.solution = matrix_u.make_matrix(
             [[(0, 1, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
         self.assertFalse(drive.check_constraint(
-            True, False, False, False))
+            True, False, False))
 
     def test_path_constraint(self):
         """Check the path constraint
@@ -363,12 +330,12 @@ class TestDrive(unittest.TestCase):
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
         self.assertTrue(drive.check_constraint(
-            False, True, False, False))
+            False, True, False))
         # vehicle 0 is not on path
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 3), (1, 3, 1)], [(0, 1, 1), (1, 1, 2)]])
         self.assertFalse(drive.check_constraint(
-            False, True, False, False))
+            False, True, False))
 
     def test_continuous_constraint(self):
         """Check if the path are continuous
@@ -382,30 +349,12 @@ class TestDrive(unittest.TestCase):
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 3)], [(0, 1, 1), (1, 1, 2)]])
         self.assertTrue(drive.check_constraint(
-            False, False, True, False))
+            False, False, True))
         # vehicle 0 is not continuous
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 0), (1, 2, 3)], [(0, 1, 1), (1, 1, 2)]])
         self.assertFalse(drive.check_constraint(
-            False, False, True, False))
-
-    def test_action_per_step_constraint(self):
-        """Check that vehicle do only one action per step
-        Tests:
-            - If vehicle do only one action per step then true
-            - If vehicle do more than one action per step then false
-        """
-        drive = solution.Drive(**DRIVE_PARAM)
-        # vehicle 0 and 1 do only one action per step
-        drive.solution = matrix_u.make_matrix(
-            [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
-        self.assertTrue(drive.check_constraint(
-            False, False, False, True))
-        # vehicle 0 do more than one action per step
-        drive.solution = matrix_u.make_matrix(
-            [[(0, 0, 1), (0, 0, 2), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
-        self.assertFalse(drive.check_constraint(
-            False, False, False, True))
+            False, False, True))
 
 
 if __name__ == '__main__':

@@ -22,35 +22,34 @@ class MatrixUtils:
         self.nb_nodes = nb_nodes
         self.nb_entity = nb_entity
 
-    def make_matrix(self, passenger_paths: list[list[tuple]]) -> np.ndarray:
+    def make_matrix(self, entity_paths: list[list[tuple]]) -> np.ndarray:
         """Make a matrix with desired paths
 
         Args:
-            passenger_paths (list(list(tuple))): list of passenger's list of paths (tuples: step, k, l)
+            entity_paths (list(list(tuple))): list of entity's list of paths (tuples: step, k, l)
 
         Returns:
             np.ndarray: matrix with desired paths
         """
-        matrix = np.zeros((self.nb_steps, self.nb_nodes,
-                          self.nb_nodes, self.nb_entity))
-        for passenger, paths_list in enumerate(passenger_paths):
+        matrix = np.array([[[-1, -1] for _ in range(self.nb_steps)]
+                          for _ in range(self.nb_entity)])
+        for entity, paths_list in enumerate(entity_paths):
             for path in paths_list:
-                matrix[path[0], path[1], path[2], passenger] = 1
+                matrix[entity, path[0]] = [path[1], path[2]]
         return matrix
 
-    def make_vehicle_matrix(self, vehicle_paths: list[list[tuple]]) -> np.ndarray:
+    def make_vehicle_matrix(self, entity_paths: list[list[tuple]]) -> np.ndarray:
         """Make a matrix with desired paths
 
         Args:
-            vehicle_paths (list(list(tuple))): list of vehicle's list of paths (tuples: step, k, l, passenger)
+            entity_paths (list(list(tuple))): list of passenger's list of vehicle used (tuples: step, vehicle)
 
         Returns:
-            np.ndarray: matrix with desired paths
+            np.ndarray: matrix used by RideVehicle
         """
-        matrix = np.zeros((self.nb_steps, self.nb_nodes,
-                          self.nb_nodes, self.nb_entity))
-        matrix = matrix - 1
-        for vehicle, paths_list in enumerate(vehicle_paths):
-            for path in paths_list:
-                matrix[path[0], path[1], path[2], path[3]] = vehicle
+        matrix = np.array([[-1 for _ in range(self.nb_steps)]
+                          for _ in range(self.nb_entity)])
+        for entity, paths in enumerate(entity_paths):
+            for (step, vehicle) in paths:
+                matrix[entity, step] = vehicle
         return matrix
