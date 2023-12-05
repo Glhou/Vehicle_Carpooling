@@ -5,6 +5,7 @@
 
 import numpy as np
 import math
+import vehicle_carpooling.utils as utils
 
 
 class Solution:
@@ -24,6 +25,9 @@ class Solution:
         self.nb_nodes = nb_nodes
         self.nb_entity = nb_entity
         self.path_map = path_map
+        self.paths = utils.paths.get_paths(path_map)
+        self.next_paths = utils.paths.get_next_paths(path_map)
+        self.empty_value = empty_value
         self.solution = np.array(
             [[empty_value for _ in range(self.nb_steps)] for _ in range(self.nb_entity)])
 
@@ -37,25 +41,39 @@ class Solution:
             return [i[0] for i in np.ndindex(self.solution.shape[0])]
         return np.ndindex(self.solution.shape[:depth])
 
-    def _clip(self, step=None):
-        """Clip the solution to 0 1 values
+    def _random_value(self, entity, step):
+        """Return a random value of the type used in the solution
         """
-        if step:
-            self.discrete_solution[step] = np.clip(
-                self.discrete_solution[step], 0, 1)
-            self.solution[step] = np.clip(self.solution[step], 0, 1)
-        else:
-            self.solution = np.clip(self.solution, 0, 1)
-            self.discrete_solution = np.clip(self.discrete_solution, 0, 1)
+        return self.empty_value
 
-    def _update_solution(self):
-        """Update the solution
+    def _initiate_shuffle(self):
+        """Initiate the shuffle
+
+        Select starting points or finish points if exists
+
+        Return:
+            list of selected steps
         """
-        for step, node_k, node_l, entity in self._iter():
-            if self.solution[step, node_k, node_l, entity] >= 0.5:
-                self.discrete_solution[step, node_k, node_l, entity] = 1
-            else:
-                self.discrete_solution[step, node_k, node_l, entity] = 0
+        return []
+
+    def shuffle(self, rate):
+        """Shuffle the solution
+
+        Args:
+            rate (float): rate of shuffle
+        """
+        done_steps = self._initiate_shuffle()
+        for entity in range(self.nb_entity):
+            for step in range(self.nb_steps):
+                if not step in done_steps:
+                    if np.random.rand() < rate:
+                        self.solution[entity, step] = self._random_value(
+                            entity, step)
+
+    def get_neighbor(self, rate):
+        """Return a created neighbor of the current solution
+        """
+        ...
 
 
 class RidePath(Solution):
@@ -80,6 +98,24 @@ class RidePath(Solution):
         self.passenger_finish_points = passenger_finish_points
         self.nb_vehicles = nb_vehicles
         self.vehicle_capacity = vehicle_capacity
+
+    def _initiate_shuffle(self):
+        for passenger in range(self.nb_entity):
+            start_node = self.passenger_start_points[passenger]
+            start_paths = self.next_paths[start_node]
+            start_path = np.random.choice(start_paths)
+            self.solution[passenger, 0] = start_path
+            finish_node = self.passenger_finish_points[passenger]
+            finish_paths = self.next_paths[finish_node]
+            finish_path = np.random.choice(finish_paths)
+            self.solution[passenger, -1] = finish_path
+        return [0, -1]
+
+    def _random_value(self, entity, step):
+        previous_node = self.solution[entity, step-1, 1]
+        random_legit_continuous_path = np.random.choice(
+            self.next_paths[previous_node])
+        return [random_legit_continuous_path[0], random_legit_continuous_path[1]]
 
     def _check_start_finish_constraint(self) -> bool:
         '''Constraint: Each passenger must start and finish in designated places
@@ -161,6 +197,9 @@ class RideVehicle(Solution):
         super().__init__(nb_steps, nb_nodes, nb_passengers, -1,  path_map)
         self.nb_vehicles = nb_vehicles
         self.vehicle_capacity = vehicle_capacity
+
+    def _random_value(self, entity, step):
+        return np.random.randint(0, self.nb_vehicles)
 
     def _check_ride_link_constraint(self, ride_path: RidePath) -> bool:
         '''Constraint: passenger use car only when they use the path and contrary
@@ -257,6 +296,20 @@ class Drive(Solution):
         super().__init__(nb_steps, nb_nodes, nb_vehicles, [-1, -1], path_map)
         self.vehicle_capacity = vehicle_capacity
         self.vehicle_start_points = vehicle_start_points
+
+    def _initiate_shuffle(self):
+        for vehicle in range(self.nb_entity):
+            start_node = self.vehicle_start_points[vehicle]
+            start_paths = self.next_paths[start_node]
+            start_path = np.random.choice(start_paths)
+            self.solution[vehicle, 0] = start_path
+        return [0]
+
+    def _random_value(self, entity, step):
+        previous_node = self.solution[entity, step-1, 1]
+        random_legit_continuous_path = np.random.choice(
+            self.next_paths[previous_node])
+        return [random_legit_continuous_path[0], random_legit_continuous_path[1]]
 
     def _check_vehicle_start_constraint(self) -> bool:
         '''Constraint: Each vehicle must start at designated places
