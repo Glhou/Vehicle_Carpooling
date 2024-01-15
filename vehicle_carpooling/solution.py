@@ -32,6 +32,7 @@ class Solution:
         self.path_map = path_map
         self.paths = utils.paths.get_paths(path_map)
         self.next_paths = utils.paths.get_next_paths(path_map)
+        self.next_nodes = utils.paths.get_next_nodes(path_map)
         self.empty_value = empty_value
         self.violation_count = 0
         self.solution = np.array(
@@ -125,6 +126,15 @@ class RidePath(Solution):
         self.passenger_finish_points = passenger_finish_points
         self.nb_vehicles = nb_vehicles
         self.vehicle_capacity = vehicle_capacity
+        self.trips = dict()
+        self._compute_trips()
+
+    def _compute_trips(self):
+        for passenger in self.nb_entity:
+            start_point = self.passenger_start_points[passenger]
+            finish_point = self.passenger_finish_points[passenger]
+            self.trips[passenger] = utils.trees.rec_compute_trips(
+                start_point, finish_point, self.nb_steps, self.next_nodes)
 
     def _initiate_shuffle(self):
         for passenger in range(self.nb_entity):

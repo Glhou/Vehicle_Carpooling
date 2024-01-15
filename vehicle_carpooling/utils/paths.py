@@ -27,3 +27,15 @@ def get_next_paths(path_map):
             if path_or_not:
                 paths[node].append((node, node_i))
     return paths
+
+
+def get_next_nodes(path_map):
+    """Return a dictionnary of all legal next node on the map
+    """
+    next_nodes = dict()
+    for node, path in enumerate(path_map):
+        next_nodes[node] = []
+        for next_node, path_or_not in enumerate(path):
+            if path_or_not:
+                next_nodes[node].append(next_node)
+    return next_nodes
