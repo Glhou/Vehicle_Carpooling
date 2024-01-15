@@ -185,14 +185,15 @@ class TestRideVehicle(unittest.TestCase):
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
             [[(0, 0)], [(1, 1)]]
         )
+
         self.assertTrue(ride_vehicle.check_constraint(
-            ride_path, True, False, False, False))
+            ride_path, None, True, False, False, False))
         # passenger 0 is using no car but using the path
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
             [[(1, 1)]]
         )
         self.assertFalse(ride_vehicle.check_constraint(
-            ride_path, True, False, False, False))
+            ride_path, None, True, False, False, False))
 
     def test_vehicle_number_link_constraint(self):
         """Check if vehicle number in RideVehicle is the same as in RidePath
@@ -222,7 +223,7 @@ class TestRideVehicle(unittest.TestCase):
              [(0, 1), (1, 1)]]
         )
         self.assertTrue(ride_vehicle.check_constraint(
-            ride_path, False, True, False, False))
+            ride_path, None, False, True, False, False))
         # vehicle 0 is missing passenger 1 at step 0 => the number of vehicle is not affected
         ride_path.solution = s_matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)], [(0, 1, 2), (1, 2, 3)]])
@@ -232,7 +233,7 @@ class TestRideVehicle(unittest.TestCase):
              [(0, 1), (1,  1)]]
         )
         self.assertTrue(ride_vehicle.check_constraint(
-            ride_path, False, True, False, False))
+            ride_path, None, False, True, False, False))
         # veicle 0 is getting one more passenger at step 0
         ride_path.solution = s_matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 0, 1), (1, 1, 2)], [(0, 0, 1), (1, 1, 3)]])
@@ -242,7 +243,7 @@ class TestRideVehicle(unittest.TestCase):
              [(0, 0), (1, 1)]]
         )
         self.assertFalse(ride_vehicle.check_constraint(
-            ride_path, False, True, False, False))
+            ride_path, None, False, True, False, False))
 
     def test_vehicle_capacity_constraint(self):
         """Check if the capacity of the vehicle is not exeeded
@@ -257,13 +258,13 @@ class TestRideVehicle(unittest.TestCase):
             [[(0, 0)]]
         )
         self.assertTrue(ride_vehicle.check_constraint(
-            None, False, False, True, False))
+            None, None, False, False, True, False))
         # vehicle 0 is exeeding the capacity
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
             [[(0, 0)], [(0, 0)]]
         )
         self.assertFalse(ride_vehicle.check_constraint(
-            None, False, False, True, False))
+            None, None, False, False, True, False))
 
     def test_vehicle_in_one_edge_constraint(self):
         """Check if all vehicles are only in one edge at each steps
@@ -274,6 +275,7 @@ class TestRideVehicle(unittest.TestCase):
         """
         ride_vehicle = solution.RideVehicle(**RIDE_VEHICLE_PARAM)
         ride_path = solution.RidePath(**RIDE_PATH_PARAM)
+        drive = solution.Drive(**DRIVE_PARAM)
         # vehicle 0 is only in one edge at each steps
         ride_path.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 0, 1), (1, 1, 1)]]
@@ -282,8 +284,11 @@ class TestRideVehicle(unittest.TestCase):
             [[(0, 0)],
              [(0, 0)]]
         )
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 0, 1), (1, 1, 2)]]
+        )
         self.assertTrue(ride_vehicle.check_constraint(
-            ride_path, False, False, False, True))
+            ride_path, drive, False, False, False, True))
         # vehicle 0 is in several edge at step 0
         ride_path.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 2), (1, 2, 2)]]
@@ -291,8 +296,11 @@ class TestRideVehicle(unittest.TestCase):
         ride_vehicle.solution = matrix_u.make_vehicle_matrix(
             [[(0, 0)], [(0, 0)]]
         )
+        drive.solution = matrix_u.make_matrix(
+            [[(0, 0, 1), (1, 1, 2)]]
+        )
         self.assertFalse(ride_vehicle.check_constraint(
-            ride_path, False, False, False, True))
+            ride_path, drive, False, False, False, True))
 
 
 class TestDrive(unittest.TestCase):
