@@ -29,8 +29,8 @@ PATH_MAP = np.array([[1, 1, 1, 0],
                     [1, 1, 1, 1],
                     [1, 1, 1, 1],
                     [0, 1, 1, 1]])
-PASSENGER_START_POINTS = np.array([0, 1])
-PASSENGER_FINISH_POINTS = np.array([1, 2])
+PASSENGER_START_POINTS = np.array([0, 1, 1])
+PASSENGER_FINISH_POINTS = np.array([1, 2, 3])
 VEHICLE_START_POINTS = np.array([0, 1])
 
 RIDE_PATH_PARAM = {

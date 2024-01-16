@@ -8,22 +8,32 @@ import copy
 import random
 
 
-def rec_compute_trips(node, finish_point, nb_steps, next_nodes: dict):
-    """Compute the trips of a passenger (node = starting_point)
-    """
-    if node == finish_point:
-        return [finish_point]
-    if nb_steps == 0:
-        return [node, None]
-    tree = []
-    for next_node in next_nodes[node]:
-        next_tree = rec_compute_trips(
-            next_node, finish_point, nb_steps-1, next_node)
-        if next_tree[0] == finish_point:
-            tree.append(next_tree)
-        elif not next_tree[1]:  # if there is branches
-            tree.append(next_tree)
-    return [node, *tree]
+def compute_trips(start_point, finish_point, nb_steps, next_nodes: dict):
+    print("start")
+
+    def rec_compute_trips(node, finish_point, nb_steps, next_nodes: dict):
+        """Compute the trips of a passenger (node = starting_point)
+        """
+        if node == finish_point:
+            return [finish_point]
+        if nb_steps == 0:
+            return [node, None]
+        tree = []
+        for next_node in next_nodes[node]:
+            next_tree = rec_compute_trips(
+                next_node, finish_point, nb_steps-1, next_nodes)
+            if len(next_tree) > 0:
+                if next_tree[0] == finish_point:
+                    tree.append(next_tree)
+            if len(next_tree) > 1:  # if there is branches
+                if next_tree[1]:
+                    tree.append(next_tree)
+        return [node, *tree]
+    trips = rec_compute_trips(
+        start_point, finish_point, nb_steps, next_nodes)
+    if len(trips) == 1:
+        return []
+    return trips
 
 
 def _get_node_from_tree(tree, tree_path, level):
@@ -40,8 +50,8 @@ def get_solution_from_tree(tree, tree_path):
     """
     solution = []
     current_node = tree[0]
-    for level, node in enumerate(tree_path):
-        next_node = _get_node_from_tree(tree, tree_path, level)
+    for level, _ in enumerate(tree_path):
+        next_node = _get_node_from_tree(tree, tree_path, level+1)
         solution.append((current_node, next_node))
         current_node = next_node
     return solution
@@ -53,7 +63,7 @@ def _get_level_branch_nb(tree, tree_path, level):
     next_tree = copy.deepcopy(tree)
     for i in range(level):
         next_tree = next_tree[tree_path[i]]
-    return len(next_tree) - 1  # remove the node
+    return len(next_tree)
 
 
 def _get_branches(tree, tree_path, impact_level):
@@ -65,27 +75,45 @@ def _get_branches(tree, tree_path, impact_level):
     return next_tree[1:]
 
 
+def _get_tree_max_level(tree):
+    """Return the maximum level of the tree
+    """
+    if len(tree) == 1:
+        return 0
+    branches = tree[1:]
+    max_level = 0
+    for branch in branches:
+        max_level = max(max_level, _get_tree_max_level(branch))
+    return max_level
+
+
 def get_tree_neighbor(tree, tree_path: list, level):
     """Return a tree neighbor of this level
     """
     modulo = _get_level_branch_nb(tree, tree_path, level)
+    max_level = _get_tree_max_level(tree)
     new_tree_path = tree_path.copy()
-    new_tree_path[level] = (new_tree_path[level] + 1) % modulo
+    new_tree_path[level] = ((new_tree_path[level] + 1) % modulo)
+    if new_tree_path[level] == 0:
+        new_tree_path[level] = 1
     # impact on lower branch
-    for impact_level in range(level, len(tree_path)):
+    for impact_level in range(level, max_level):
         new_branches = _get_branches(tree, new_tree_path, impact_level)
         previous_next_node = _get_node_from_tree(
             tree, tree_path, impact_level + 1)
         for i in range(len(new_branches)):
             if previous_next_node in new_branches[i]:
-                new_tree_path[level+1] = i + 1
+                new_tree_path.append(i + 1)
         new_tree_path[level+1] = new_tree_path[level+1] % len(new_branches)
+        if new_tree_path[level+1] == 0:
+            new_tree_path[level+1] = 1
+    # filling until finish point
     finish_point = _get_node_from_tree(tree, new_tree_path, len(new_tree_path))
     previous_finish_point = _get_node_from_tree(
         tree, tree_path, len(tree_path))
     while finish_point != previous_finish_point:
-        level = len(new_tree_path) + 1
+        level = len(new_tree_path)
         branches = _get_branches(tree, new_tree_path, level)
         new_tree_path.append(random.randint(1, len(branches)))
-        finish_point = branches[new_tree_path[-1]][0]
+        finish_point = branches[new_tree_path[-1]-1][0]
     return new_tree_path

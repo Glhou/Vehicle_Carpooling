@@ -130,10 +130,10 @@ class RidePath(Solution):
         self._compute_trips()
 
     def _compute_trips(self):
-        for passenger in self.nb_entity:
+        for passenger in range(self.nb_entity):
             start_point = self.passenger_start_points[passenger]
             finish_point = self.passenger_finish_points[passenger]
-            self.trips[passenger] = utils.trees.rec_compute_trips(
+            self.trips[passenger] = utils.trees.compute_trips(
                 start_point, finish_point, self.nb_steps, self.next_nodes)
 
     def _initiate_shuffle(self):
