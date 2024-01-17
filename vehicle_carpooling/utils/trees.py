@@ -8,8 +8,31 @@ import copy
 import random
 
 
+def compute_solutions(start_point, finish_point, nb_steps, next_nodes: dict):
+    """Compute all the solutions of a passenger
+    """
+    trips = compute_trips(start_point, finish_point, nb_steps, next_nodes)
+    solutions = []
+    for trip in trips:
+        solution = []
+        for i in range(1, len(trip)):
+            solution.append([trip[i-1], trip[i]])
+        solutions.append(solution)
+        for i in range(len(trip), nb_steps+1):
+            solution.append([trip[-1], trip[-1]])
+    return solutions
+
+
 def compute_trips(start_point, finish_point, nb_steps, next_nodes: dict):
-    print("start")
+    """Compute the list of trips of a passenger
+    """
+    tree = compute_tree_trips(start_point, finish_point, nb_steps, next_nodes)
+    return get_all_solutions_from_tree(tree)
+
+
+def compute_tree_trips(start_point, finish_point, nb_steps, next_nodes: dict):
+    """Compute the tree of trips of a passenger
+    """
 
     def rec_compute_trips(node, finish_point, nb_steps, next_nodes: dict):
         """Compute the trips of a passenger (node = starting_point)
@@ -52,9 +75,41 @@ def get_solution_from_tree(tree, tree_path):
     current_node = tree[0]
     for level, _ in enumerate(tree_path):
         next_node = _get_node_from_tree(tree, tree_path, level+1)
-        solution.append((current_node, next_node))
+        solution.append([current_node, next_node])
         current_node = next_node
     return solution
+
+
+def get_all_tree_paths(tree):
+    """Return list of all tree paths
+    """
+    def rec(tree, tree_path):
+        if len(tree) == 1:
+            return [tree_path]
+        branches = tree[1:]
+        tree_paths = []
+        for node, branch in enumerate(branches):
+            tmp_tree_paths = (rec(branch, tree_path + [node+1]))
+            tree_paths += tmp_tree_paths
+        return tree_paths
+    return rec(tree, [])
+
+
+def get_all_solutions_from_tree(tree):
+    """Return all half solution from the tree
+    """
+    if len(tree) == 0:
+        return []
+
+    def rec(tree, sol):
+        if len(tree) == 1:
+            return [sol]
+        branches = tree[1:]
+        solutions = []
+        for branch in branches:
+            solutions += rec(branch, sol + [branch[0]])
+        return solutions
+    return rec(tree, [tree[0]])
 
 
 def _get_level_branch_nb(tree, tree_path, level):

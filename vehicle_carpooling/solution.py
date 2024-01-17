@@ -37,6 +37,10 @@ class Solution:
         self.violation_count = 0
         self.solution = np.array(
             [[empty_value for _ in range(self.nb_steps)] for _ in range(self.nb_entity)])
+        # solutions per entity
+        self.solutions_pe = dict([(entity, [])
+                                 for entity in range(self.nb_entity)])
+        self.solutions_pe_index = [_ for _ in range(self.nb_entity)]
 
     def _iter(self, depth=4):
         """Return iterator of indexes the solution using the solution shape
@@ -85,6 +89,15 @@ class Solution:
                         self.solution[entity, step] = self._random_value(
                             entity, step)
 
+    def tree_suffle(self):
+        """Shuffle the solution using tree
+        """
+        for entity in range(self.nb_entity):
+            if self.solutions_pe[entity]:
+                index = np.random.randint(0, len(self.solutions_pe[entity]))
+                self.solution[entity] = self.solutions_pe[entity][index]
+                self.solutions_pe_index[entity] = index
+
     def copy(self):
         return copy.deepcopy(self)
 
@@ -102,6 +115,18 @@ class Solution:
                     if step < self.nb_steps - 1:
                         neighbor.solution[entity, step+1, 0] = swap_node
         return neighbor
+
+    def get_tree_neighbor(self, temperature):
+        """Return a neighbor of the current solution using the computed solutions
+
+        Args:
+            temperature (0<float<1): rate of changement for neighbors
+        """
+        for entity in range(self.nb_entity):
+            if np.random.rand() < temperature:
+                self.solutions_pe_index[entity] = (
+                    self.solutions_pe_index[entity] + 1) % len(self.solutions_pe[entity])
+                self.solution[entity] = self.solutions_pe[entity][self.solutions_pe_index[entity]]
 
 
 class RidePath(Solution):
@@ -126,14 +151,13 @@ class RidePath(Solution):
         self.passenger_finish_points = passenger_finish_points
         self.nb_vehicles = nb_vehicles
         self.vehicle_capacity = vehicle_capacity
-        self.trips = dict()
-        self._compute_trips()
+        self._compute_solutions()
 
-    def _compute_trips(self):
+    def _compute_solutions(self):
         for passenger in range(self.nb_entity):
             start_point = self.passenger_start_points[passenger]
             finish_point = self.passenger_finish_points[passenger]
-            self.trips[passenger] = utils.trees.compute_trips(
+            self.solutions_pe[passenger] = utils.trees.compute_solutions(
                 start_point, finish_point, self.nb_steps, self.next_nodes)
 
     def _initiate_shuffle(self):
