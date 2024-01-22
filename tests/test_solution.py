@@ -275,7 +275,7 @@ class TestRideVehicle(unittest.TestCase):
         """
         ride_vehicle = solution.RideVehicle(**RIDE_VEHICLE_PARAM)
         ride_path = solution.RidePath(**RIDE_PATH_PARAM)
-        drive = solution.Drive(**DRIVE_PARAM)
+        drive = solution.DrivePath(**DRIVE_PARAM)
         # vehicle 0 is only in one edge at each steps
         ride_path.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 0, 1), (1, 1, 1)]]
@@ -314,7 +314,7 @@ class TestDrive(unittest.TestCase):
             - If vehicle start then true
             - If vehicle do not start then false
         """
-        drive = solution.Drive(**DRIVE_PARAM)
+        drive = solution.DrivePath(**DRIVE_PARAM)
         # vehicle 0 and 1 start and finish in their positions
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
@@ -333,7 +333,7 @@ class TestDrive(unittest.TestCase):
             - If vehicle is on path then true
             - If vehicle is not on path then false
         """
-        drive = solution.Drive(**DRIVE_PARAM)
+        drive = solution.DrivePath(**DRIVE_PARAM)
         # vehicle 0 and 1 are on path
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 1)], [(0, 1, 1), (1, 1, 2)]])
@@ -352,7 +352,7 @@ class TestDrive(unittest.TestCase):
             - If path is continuous then true
             - If path is not continuous then false
         """
-        drive = solution.Drive(**DRIVE_PARAM)
+        drive = solution.DrivePath(**DRIVE_PARAM)
         # vehicle 0 and 1 have continuous paths
         drive.solution = matrix_u.make_matrix(
             [[(0, 0, 1), (1, 1, 3)], [(0, 1, 1), (1, 1, 2)]])

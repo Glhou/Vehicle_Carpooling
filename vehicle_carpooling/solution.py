@@ -4,10 +4,13 @@
 """
 
 import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
 import math
 import copy
 import logging
 import vehicle_carpooling.utils as utils
+from matplotlib import colors as mcolors
 
 logger = logging.getLogger(__name__)
 
@@ -128,9 +131,87 @@ class Solution:
                     self.solutions_pe_index[entity] + 1) % len(self.solutions_pe[entity])
                 self.solution[entity] = self.solutions_pe[entity][self.solutions_pe_index[entity]]
 
+class Path(Solution):
+    """Path class
 
-class RidePath(Solution):
+    Used for utils for path type solution
+    """
+    def __init__(self, nb_steps, nb_nodes, nb_entity, empty_value, path_map, path_type) -> None:
+        """Initialize the Path object
+
+        Args:
+            nb_steps (int): number of maximum steps
+            nb_nodes (int): number of nodes
+            nb_entity (int): number of entity (passenger / vehicles)
+            empty_value (int or list): value of empty
+            path_map (np.ndarray): possible path on the map
+        """
+        super().__init__(nb_steps, nb_nodes, nb_entity, empty_value, path_map)
+        self.path_type = path_type
+        self.colors = [None for _ in range(self.nb_entity)]
+
+    def graph(self, select_entity=None):
+        """Create a graph of the solution to visualise the paths
+        """
+        MDG = nx.MultiDiGraph()
+        MDG.add_nodes_from([node for node in range(self.nb_nodes)])
+        for node_i in range(self.nb_nodes):
+            for node_j in range(self.nb_nodes):
+                if node_i != node_j and self.path_map[node_i, node_j]:
+                    MDG.add_edge(node_i,node_j)
+        pos = nx.spring_layout(MDG, seed=111)
+        ax = plt.gca()
+        ax.set_title('Solution')
+        colors = list(mcolors.TABLEAU_COLORS.keys())
+        waiting_steps = 0
+        ans = dict({i: [] for i in range(self.nb_entity)})
+        for entity in range(self.nb_entity):
+            if select_entity is not None and entity != select_entity:
+                continue
+            for step in range(self.nb_steps):
+                rad = (step+1) * 0.2
+                if self.solution[entity, step, 0] != self.solution[entity, step, 1]:
+                    if waiting_steps != 0:
+                        # add arrow for previous waiting steps
+                        ax.annotate(
+                            f"{self.path_type.capitalize()} {entity} is waiting {waiting_steps} steps", xy=pos[self.solution[entity,step,0]] - [-0.05, step * 0.1])
+                        waiting_steps = 0
+                    
+                    e = (self.solution[entity, step, 0],
+                         self.solution[entity, step, 1])
+                    a = ax.annotate("",
+                            label=f"{self.path_type.capitalize()} {entity}",
+                            xy=pos[e[0]], xycoords='data',
+                            xytext=pos[e[1]], textcoords='data',
+                            arrowprops=dict(arrowstyle="<-",
+                                            mutation_scale=28,
+                                            color=colors[entity % len(colors)],
+                                            lw=3,
+                                            shrinkA=5, shrinkB=5,
+                                            patchA=None, patchB=None,
+                                            connectionstyle=f"arc3,rad={rad}",
+                                            )
+                    )
+                    ans[entity].append(a)
+                    self.colors[entity] = colors[(entity) % len(colors)]
+                else:
+                    waiting_steps += 1
+        ans = [l[0] for k, l in ans.items() if l]
+        ax.legend([an.arrow_patch for an in ans],
+            (an.get_label() for an in ans))
+        plt.axis('off')
+        nx.draw(MDG, pos, with_labels=True)
+        plt.title(
+            f"{self.path_type.capitalize()} graph nb_entity={self.nb_entity},steps={self.nb_steps},nodes={self.nb_nodes})")
+        plt.show()
+
+
+
+
+class RidePath(Path):
     """RidePath class
+
+    This class is used to compute the paths of the passengers
     """
 
     def __init__(self, nb_steps: int, nb_nodes: int, nb_passengers: int, passenger_start_points: np.ndarray, passenger_finish_points: np.ndarray, path_map: np.ndarray, nb_vehicles: int, vehicle_capacity: int) -> None:
@@ -146,7 +227,7 @@ class RidePath(Solution):
             nb_vehicles (int): number of vehicles
             vehicle_capacity (int): vehicle capacity
         """
-        super().__init__(nb_steps, nb_nodes, nb_passengers, [-1, -1], path_map)
+        super().__init__(nb_steps, nb_nodes, nb_passengers, [-1, -1], path_map, "Ride path")
         self.passenger_start_points = passenger_start_points
         self.passenger_finish_points = passenger_finish_points
         self.nb_vehicles = nb_vehicles
@@ -241,8 +322,10 @@ class RidePath(Solution):
         return check
 
 
-class Drive(Solution):
-    """Drive class
+class DrivePath(Path):
+    """DrivePath class
+
+    This class is used to compute the paths of the vehicles
     """
 
     def __init__(self, nb_steps: int, nb_nodes: int, nb_vehicles: int, vehicle_capacity: int, vehicle_start_points: np.ndarray, path_map: np.ndarray) -> None:
@@ -256,7 +339,7 @@ class Drive(Solution):
             vehicle_start_points (np.ndarray): list of vehicle start points
             path_map (np.ndarray): possible path on the map
         """
-        super().__init__(nb_steps, nb_nodes, nb_vehicles, [-1, -1], path_map)
+        super().__init__(nb_steps, nb_nodes, nb_vehicles, [-1, -1], path_map, "Drive path")
         self.vehicle_capacity = vehicle_capacity
         self.vehicle_start_points = vehicle_start_points
 
@@ -325,6 +408,8 @@ class Drive(Solution):
 
 class RideVehicle(Solution):
     """RideVehicle class
+
+    This class is used to link RidePath and DrivePath
     """
 
     def __init__(self, nb_steps: int, nb_nodes: int, nb_passengers: int, path_map: np.ndarray, nb_vehicles: int, vehicle_capacity: int):
@@ -379,7 +464,7 @@ class RideVehicle(Solution):
                                           == vehicle_id) <= self.vehicle_capacity
         return self._check_violation(bool(check))
 
-    def _check_vehicle_only_in_one_edge_condition(self, ride_path: RidePath, drive: Drive) -> bool:
+    def _check_vehicle_only_in_one_edge_condition(self, ride_path: RidePath, drive: DrivePath) -> bool:
         """Constraint: a vehicle can only be in a edge a a time at maximum
         """
         check = True
@@ -401,7 +486,7 @@ class RideVehicle(Solution):
                 check *= len(unique_paths) <= 1
         return self._check_violation(bool(check))
 
-    def check_constraint(self, ride_path: RidePath, drive: Drive, ride_link_constraint=True, vehicle_number_link_ride_constraint=True, vehicle_capacity_constraint=True, vehicle_only_in_one_edge_condition=True) -> bool:
+    def check_constraint(self, ride_path: RidePath, drive: DrivePath, ride_link_constraint=True, vehicle_number_link_ride_constraint=True, vehicle_capacity_constraint=True, vehicle_only_in_one_edge_condition=True) -> bool:
         '''Constraint: All constraints
 
         Args:
