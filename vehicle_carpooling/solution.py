@@ -131,11 +131,13 @@ class Solution:
                     self.solutions_pe_index[entity] + 1) % len(self.solutions_pe[entity])
                 self.solution[entity] = self.solutions_pe[entity][self.solutions_pe_index[entity]]
 
+
 class Path(Solution):
     """Path class
 
     Used for utils for path type solution
     """
+
     def __init__(self, nb_steps, nb_nodes, nb_entity, empty_value, path_map, path_type) -> None:
         """Initialize the Path object
 
@@ -158,7 +160,7 @@ class Path(Solution):
         for node_i in range(self.nb_nodes):
             for node_j in range(self.nb_nodes):
                 if node_i != node_j and self.path_map[node_i, node_j]:
-                    MDG.add_edge(node_i,node_j)
+                    MDG.add_edge(node_i, node_j)
         pos = nx.spring_layout(MDG, seed=111)
         ax = plt.gca()
         ax.set_title('Solution')
@@ -174,38 +176,37 @@ class Path(Solution):
                     if waiting_steps != 0:
                         # add arrow for previous waiting steps
                         ax.annotate(
-                            f"{self.path_type.capitalize()} {entity} is waiting {waiting_steps} steps", xy=pos[self.solution[entity,step,0]] - [-0.05, step * 0.1])
+                            f"{self.path_type.capitalize()} {entity} is waiting {waiting_steps} steps", xy=pos[self.solution[entity, step, 0]] - [-0.05, step * 0.1])
                         waiting_steps = 0
-                    
+
                     e = (self.solution[entity, step, 0],
                          self.solution[entity, step, 1])
                     a = ax.annotate("",
-                            label=f"{self.path_type.capitalize()} {entity}",
-                            xy=pos[e[0]], xycoords='data',
-                            xytext=pos[e[1]], textcoords='data',
-                            arrowprops=dict(arrowstyle="<-",
-                                            mutation_scale=28,
-                                            color=colors[entity % len(colors)],
-                                            lw=3,
-                                            shrinkA=5, shrinkB=5,
-                                            patchA=None, patchB=None,
-                                            connectionstyle=f"arc3,rad={rad}",
-                                            )
-                    )
+                                    label=f"{self.path_type.capitalize()} {entity}",
+                                    xy=pos[e[0]], xycoords='data',
+                                    xytext=pos[e[1]], textcoords='data',
+                                    arrowprops=dict(arrowstyle="<-",
+                                                    mutation_scale=28,
+                                                    color=colors[entity %
+                                                                 len(colors)],
+                                                    lw=3,
+                                                    shrinkA=5, shrinkB=5,
+                                                    patchA=None, patchB=None,
+                                                    connectionstyle=f"arc3,rad={rad}",
+                                                    )
+                                    )
                     ans[entity].append(a)
                     self.colors[entity] = colors[(entity) % len(colors)]
                 else:
                     waiting_steps += 1
         ans = [l[0] for k, l in ans.items() if l]
         ax.legend([an.arrow_patch for an in ans],
-            (an.get_label() for an in ans))
+                  (an.get_label() for an in ans))
         plt.axis('off')
         nx.draw(MDG, pos, with_labels=True)
         plt.title(
             f"{self.path_type.capitalize()} graph nb_entity={self.nb_entity},steps={self.nb_steps},nodes={self.nb_nodes})")
         plt.show()
-
-
 
 
 class RidePath(Path):
@@ -227,7 +228,8 @@ class RidePath(Path):
             nb_vehicles (int): number of vehicles
             vehicle_capacity (int): vehicle capacity
         """
-        super().__init__(nb_steps, nb_nodes, nb_passengers, [-1, -1], path_map, "Ride path")
+        super().__init__(nb_steps, nb_nodes, nb_passengers,
+                         [-1, -1], path_map, "Ride path")
         self.passenger_start_points = passenger_start_points
         self.passenger_finish_points = passenger_finish_points
         self.nb_vehicles = nb_vehicles
@@ -339,7 +341,8 @@ class DrivePath(Path):
             vehicle_start_points (np.ndarray): list of vehicle start points
             path_map (np.ndarray): possible path on the map
         """
-        super().__init__(nb_steps, nb_nodes, nb_vehicles, [-1, -1], path_map, "Drive path")
+        super().__init__(nb_steps, nb_nodes, nb_vehicles,
+                         [-1, -1], path_map, "Drive path")
         self.vehicle_capacity = vehicle_capacity
         self.vehicle_start_points = vehicle_start_points
 

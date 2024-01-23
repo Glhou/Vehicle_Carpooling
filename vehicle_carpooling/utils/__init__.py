@@ -3,4 +3,4 @@
 """Utils
 """
 
-from vehicle_carpooling.utils import paths,trees
+from vehicle_carpooling.utils import paths, trees
