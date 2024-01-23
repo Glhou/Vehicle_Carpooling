@@ -34,17 +34,18 @@ def compute_tree_trips(start_point, finish_point, nb_steps, next_nodes: dict):
     """Compute the tree of trips of a passenger
     """
 
-    def rec_compute_trips(node, finish_point, nb_steps, next_nodes: dict):
+    def rec_compute_trips(node, finish_point, nb_steps, next_nodes: dict, used_path=[]):
         """Compute the trips of a passenger (node = starting_point)
         """
+
         if node == finish_point:
             return [finish_point]
-        if nb_steps == 0:
+        if nb_steps == 0 or (node in used_path and node != used_path[-1]):
             return [node, None]
         tree = []
         for next_node in next_nodes[node]:
             next_tree = rec_compute_trips(
-                next_node, finish_point, nb_steps-1, next_nodes)
+                next_node, finish_point, nb_steps-1, next_nodes, used_path + [node])
             if len(next_tree) > 0:
                 if next_tree[0] == finish_point:
                     tree.append(next_tree)
