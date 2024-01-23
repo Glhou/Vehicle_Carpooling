@@ -1,5 +1,6 @@
 build
 doctrees
 __pycache__
-.pyc
+*.pyc
 notebook.ipynb
+*.prof

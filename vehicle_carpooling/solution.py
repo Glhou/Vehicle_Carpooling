@@ -11,6 +11,7 @@ import copy
 import logging
 import vehicle_carpooling.utils as utils
 from matplotlib import colors as mcolors
+import concurrent.futures
 
 logger = logging.getLogger(__name__)
 
@@ -238,12 +239,27 @@ class RidePath(Path):
         self.vehicle_capacity = vehicle_capacity
         self._compute_solutions()
 
-    def _compute_solutions(self):
+    def _old_compute_solutions(self):
         for passenger in range(self.nb_entity):
             start_point = self.passenger_start_points[passenger]
             finish_point = self.passenger_finish_points[passenger]
             self.solutions_pe[passenger] = utils.trees.compute_solutions(
                 start_point, finish_point, self.nb_steps, self.next_nodes)
+
+    def _compute_solutions(self):
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            futures = {executor.submit(utils.trees.compute_solutions,
+                                       self.passenger_start_points[passenger],
+                                       self.passenger_finish_points[passenger],
+                                       self.nb_steps,
+                                       self.next_nodes): passenger for passenger in range(self.nb_entity)}
+            for future in concurrent.futures.as_completed(futures):
+                passenger = futures[future]
+                try:
+                    self.solutions_pe[passenger] = future.result()
+                except Exception as exc:
+                    print(
+                        f'Passenger {passenger} generated an exception: {exc}')
 
     def _initiate_shuffle(self):
         for passenger in range(self.nb_entity):
