@@ -100,6 +100,8 @@ class Solution:
                 index = np.random.randint(0, len(self.solutions_pe[entity]))
                 self.solution[entity] = self.solutions_pe[entity][index]
                 self.solutions_pe_index[entity] = index
+                if self.solution[entity] == []:
+                    raise Exception("A entity has no solution", entity)
 
     def copy(self):
         return copy.deepcopy(self)
