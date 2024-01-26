@@ -6,20 +6,27 @@
 import numpy as np
 import copy
 import random
+import cProfile
+from collections import deque
+
+profiler = cProfile.Profile()
 
 
 def compute_solutions(start_point, finish_point, nb_steps, next_nodes: dict):
     """Compute all the solutions of a passenger
     """
-    trips = compute_trips(start_point, finish_point, nb_steps, next_nodes)
+    profiler.enable()
     solutions = []
-    for trip in trips:
+    for trip in new_compute_trips(
+            start_point, finish_point, nb_steps, next_nodes):
         solution = []
         for i in range(1, len(trip)):
             solution.append([trip[i-1], trip[i]])
         solutions.append(solution)
         for i in range(len(trip), nb_steps+1):
             solution.append([trip[-1], trip[-1]])
+    profiler.disable()
+    profiler.dump_stats('profiles/trees/profile_compute_solutions.prof')
     return solutions
 
 
@@ -30,14 +37,39 @@ def compute_trips(start_point, finish_point, nb_steps, next_nodes: dict):
     return get_all_solutions_from_tree(tree)
 
 
+def new_compute_trips(start_node, finish_node, nb_steps, next_nodes: dict):
+    profiler.enable()
+    with open('output.txt', 'w') as f:
+        queue = deque([(start_node, [start_node])])
+        # n-1 + n-1 = min number of steps, n-1 + n-1 + n-1 = max number of steps
+        nb_nodes = len(next_nodes)
+        level_found = [nb_steps]
+        mean_level_found = nb_steps
+        while queue:
+            node, path = queue.popleft()
+            if node == finish_node:
+                yield path
+                level_found.append(len(path))
+                mean_level_found = np.mean(level_found)
+                print(mean_level_found, file=f)
+            else:
+                if len(path) <= nb_steps and len(path) <= mean_level_found:
+                    for next_node in next_nodes.get(node, []):
+                        if next_node not in path or node == next_node:
+                            queue.append((next_node, path + [next_node]))
+    profiler.disable()
+    profiler.dump_stats('profiles/trees/profile_new_compute_trips.prof')
+
+
+# depreciated
 def compute_tree_trips(start_point, finish_point, nb_steps, next_nodes: dict):
     """Compute the tree of trips of a passenger
     """
+    profiler.enable()
 
     def rec_compute_trips(node, finish_point, nb_steps, next_nodes: dict, used_path=[]):
         """Compute the trips of a passenger (node = starting_point)
         """
-
         if node == finish_point:
             return [finish_point]
         if nb_steps == 0 or (node in used_path and node != used_path[-1]):
@@ -57,6 +89,8 @@ def compute_tree_trips(start_point, finish_point, nb_steps, next_nodes: dict):
         start_point, finish_point, nb_steps, next_nodes)
     if len(trips) == 1:
         return []
+    profiler.disable()
+    profiler.dump_stats('profiles/trees/profile_compute_trips.prof')
     return trips
 
 

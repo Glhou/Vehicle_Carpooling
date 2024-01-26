@@ -60,6 +60,28 @@ class TestTreeUtils(unittest.TestCase):
         print(solutions)
         self.assertEqual(supposed_solutions, solutions)
 
+    def test_new_compute_trips(self):
+        start_point = 1
+        finish_point = 2
+        nb_steps = 2
+        next_nodes = {
+            0: [0, 1, 2],
+            1: [0, 1, 2, 3],
+            2: [0, 1, 2, 3],
+            3: [1, 2, 3]
+        }
+        expected_paths = [
+            [1, 0, 2],
+            [1, 1, 2],
+            [1, 2],
+            [1, 3, 2]
+        ]
+        actual_paths = list(
+            trees.new_rec_compute_trips(start_point, finish_point, nb_steps, next_nodes))
+        expected_paths.sort()
+        actual_paths.sort()
+        self.assertEqual(actual_paths, expected_paths)
+
     def test_compute_tree_trips(self):
         """Tests compute tree trips funciton
         """

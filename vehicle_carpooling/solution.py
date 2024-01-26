@@ -257,9 +257,10 @@ class RidePath(Path):
                 passenger = futures[future]
                 try:
                     self.solutions_pe[passenger] = future.result()
+                    # print(f"Finished {passenger} passenger")
                 except Exception as exc:
                     print(
-                        f'Passenger {passenger} generated an exception: {exc}')
+                        f'Passenger {passenger} generated an exception during the initialization: {exc}')
 
     def _initiate_shuffle(self):
         for passenger in range(self.nb_entity):
