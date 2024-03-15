@@ -3,4 +3,4 @@
 """ Vehicle carpooling optimization package
 """
 
-from vehicle_carpooling import problem, solution
+from vehicle_carpooling import simulation, vehicle, path, passenger

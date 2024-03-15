@@ -3,4 +3,4 @@
 """ Vehicle optimization module's tests
 """
 
-from tests import test_solution, test_test_utils, test_utils
+from tests import test_simulation, test_vehicle, test_passenger, test_path
