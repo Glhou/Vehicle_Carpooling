@@ -2,8 +2,6 @@ build
 doctrees
 __pycache__
 *.pyc
-notebook.ipynb
 *.prof
 profiles
 output.txt
-data

@@ -1,0 +1,18 @@
+<additional>
+    <poi id="light1684241949520_s" color="green" type="light" layer="10" lane="-209317297#0_0"
+        pos="50" />
+    <poi id="light1684241949520_1" color="blue" type="light" layer="10" lane="544700856#0_0"
+        pos="50" />
+    <poi id="light1684241949520_2" color="blue" type="light" layer="10" lane="-209317305#2_0"
+        pos="50" />
+    <poi id="light1684241949520_3" color="blue" type="light" layer="10" lane="-209019661_0" pos="50" />
+    <poi id="light1684241949520_4" color="blue" type="light" layer="10" lane="-619269820_0" pos="50" />
+    <poi id="light1684241949520_5" color="blue" type="light" layer="10" lane="-96382892#1_0"
+        pos="50" />
+    <poi id="light1684241949520_6" color="blue" type="light" layer="10" lane="-96382893#0_0"
+        pos="50" />
+    <poi id="light1684241949520_7" color="blue" type="light" layer="10" lane="-32902837#4_0"
+        pos="50" />
+    <poi id="light1684241949520_f" color="red" type="light" layer="10" lane="-933137813#0_0"
+        pos="50" />
+</additional>
